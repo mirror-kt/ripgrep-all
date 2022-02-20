@@ -1,14 +1,13 @@
-
 use crate::adapted_iter::SingleAdaptedFileAsIter;
 
 use super::*;
 use anyhow::*;
 use log::*;
 
+use crate::adapters::FileAdapter;
 use std::process::Command;
 use std::process::{Child, Stdio};
 use std::{io::prelude::*, path::Path};
-use crate::adapters::FileAdapter;
 
 // TODO: don't separate the trait and the struct
 pub trait SpawningFileAdapterTrait: GetMetadata {
@@ -82,7 +81,7 @@ pub fn pipe_output<'a>(
 
     // TODO: deadlocks since this is run in the same thread as the thing reading from stdout of the process
     std::io::copy(inp, &mut stdi)?;
-    drop(stdi); 
+    drop(stdi);
 
     Ok(Box::new(stdo.chain(ProcWaitReader { proce: cmd })))
 }
@@ -122,14 +121,16 @@ impl FileAdapter for SpawningFileAdapter {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use std::io::Cursor;
 
-    use crate::{adapters::custom::CustomAdapterConfig, test_utils::{adapted_to_vec, simple_adapt_info}};
     use super::*;
     use crate::adapters::FileAdapter;
+    use crate::{
+        adapters::custom::CustomAdapterConfig,
+        test_utils::{adapted_to_vec, simple_adapt_info},
+    };
 
     #[test]
     fn streaming() {
@@ -143,7 +144,7 @@ mod test {
             mimetypes: None,
             match_only_by_mime: None,
             binary: "sed".to_string(),
-            args: vec!["s/e/u/g".to_string()]
+            args: vec!["s/e/u/g".to_string()],
         };
 
         let adapter = adapter.to_adapter();
@@ -159,7 +160,10 @@ mod test {
         let input = format!("{0}{0}{0}{0}", input);
         let input = format!("{0}{0}{0}{0}", input);
         let input = format!("{0}{0}{0}{0}", input);
-        let (a, d) = simple_adapt_info(&Path::new("foo.txt"), Box::new(Cursor::new(input.as_bytes())));
+        let (a, d) = simple_adapt_info(
+            &Path::new("foo.txt"),
+            Box::new(Cursor::new(input.as_bytes())),
+        );
         let output = adapter.adapt(a, &d).unwrap();
 
         let oup = adapted_to_vec(output).unwrap();
